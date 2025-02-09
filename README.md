@@ -16,35 +16,50 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
     npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+📂 BookApp
+ ┣ 📂 .expo  
+ ┣ 📂 .vscode
+ ┣ 📂 app
+ ┣ ┣ 📂 (tabs)
+ ┣ ┣ ┣ 📜 _layout.tsx
+ ┣ ┣ ┣ 📜 explore.tsx
+ ┣ ┣ ┣ 📜 index.tsx
+ ┣ ┣ 📜 _layout.tsx
+ ┣ ┣ 📜 +not-found.tsx
+ ┣ 📂 assets    
+ ┣ 📂 components
+ ┣ 📂 constants
+ ┣ 📂 hooks
+ ┣ 📂 node_modules
+ ┣ 📂 scripts
+ ┣ 📜 app.json
+ ┣ 📜 expo-env.d.ts
+ ┣ 📜 package-lock.json
+ ┣ 📜 package.json
+ ┗ 📜 tsconfig.json
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
 
 ```bash
-npm run reset-project
+npx create-expo-app sqlapp
+
+npx expo install expo-sqlite
+
+npm i -D drizzle-kit
+npm i drizzle-orm babel-plugin-inline-import
+npm i expo-drizzle-studio-plugin
+
+npx expo customize metro.config.js
+
+npx expo customize babel.config.js
+
+npx drizzle-kit generate
+
+
 ```
+metro
+      config.resolver.sourceExts.push('sql'); // <--- add this
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+bable
+    plugins: [['inline-import', { extensions: ['.sql'] }]], // Add this line
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
