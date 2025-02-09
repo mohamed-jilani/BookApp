@@ -1,84 +1,84 @@
-
-import { SectionList, Text, View, StyleSheet, TouchableOpacity, FlatList } from "react-native";
-import { eq, sql } from "drizzle-orm";
-import { drizzle, useLiveQuery } from "drizzle-orm/expo-sqlite";
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image } from "react-native";
+import { drizzle } from "drizzle-orm/expo-sqlite";
 import { useSQLiteContext } from "expo-sqlite";
-import { carts, Book, Cart, books } from "@/db/schema";
 import { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
 import * as schema from "@/db/schema";
-export default function Index() {
-  //const [data, setData] = useState<Cart[]>([]);
-  const [data, setData] = useState<Book[]>([]);
+import { Book } from "@/db/schema";
 
+export default function Index() {
+  const [data, setData] = useState<Book[]>([]);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
+  const router = useRouter();
 
   useEffect(() => {
-    const load = async () => {
-      const data = await drizzleDb.query.books.findMany();
-      //const data = await drizzleDb.query.carts.findMany();
-      //const data = await drizzleDb.select().from(tasks).toSQL();
-      console.log("~ load ~ data:", data);
-      setData(data);
+    const loadBooks = async () => {
+      const booksList = await drizzleDb.query.books.findMany();
+      console.log("Livres chargés :", booksList);
+      setData(booksList);
     };
-    load();
+    loadBooks();
   }, []);
-  
+
   return (
+    <View style={styles.container}>
+      <Text style={styles.title}>📚 Liste des livres</Text>
 
-    <View style={styles.container1}>
-      <Text style={styles.title}>Books</Text>
-
-      {data?.map((item) => (  
-        <TouchableOpacity style={styles.container}> 
-          <View style={styles.info} key={item.id}>
-            {/* 
-            <Text style={styles.date} key={item.id}>{item.quantite}</Text>
-            <Text style={styles.date} key={item.id}>{item.book_id}</Text>
-            */}
-            <Text style={styles.title} >{item.title}</Text>
-            <Text style={styles.author} >{item.author}</Text>
-            <Text style={styles.date} >{item.publishedDate}</Text>
+      <FlatList
+        data={data}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.bookItem}>
+            <Text style={styles.bookTitle}>{item.title}</Text>
+            <Text style={styles.bookAuthor}>{item.author}</Text>
           </View>
-        </TouchableOpacity>
-      ))}
-      
-    </View>
+        )}
+      />
 
-    
+      {/* Bouton flottant pour ajouter un livre */}
+      <TouchableOpacity style={styles.floatingButton} onPress={() => router.push("/addBook")}>
+        <Image source={require("../../assets/icons/plus.png")} style={styles.icon} />
+      </TouchableOpacity>
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container1: {
-    flex: 1,
-    padding: 10,
-  },
   container: {
-    flexDirection: 'row',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  image: {
-    width: 50,
-    height: 70,
-    marginRight: 10,
-  },
-  info: {
     flex: 1,
-    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: "#fff",
   },
   title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  bookItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  bookTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  bookAuthor: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: "gray",
   },
-  author: {
-    fontSize: 14,
-    color: '#666',
+  floatingButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
   },
-  date: {
-    fontSize: 12,
-    color: '#888',
+  icon: {
+    width: 50,
+    height: 50,
   },
 });
