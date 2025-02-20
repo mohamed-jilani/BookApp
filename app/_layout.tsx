@@ -14,7 +14,8 @@ import { SQLiteProvider, openDatabaseSync } from 'expo-sqlite';
 import { drizzle } from 'drizzle-orm/expo-sqlite';
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import migrations from '@/drizzle/migrations';
-import { addDummyData } from '@/db/addDummyData';
+import { addDummyData} from '@/db/addDummyData';
+import DetailsScreen from './(tabs)/Details';
 //--------------------
 
 export const DATABASE_NAME = 'books';
@@ -31,6 +32,7 @@ export default function RootLayout() {
   useEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
+      addDummyData(db);
     }
   }, [loaded]);
 
@@ -43,19 +45,22 @@ export default function RootLayout() {
     if( success) {
       console.log('Migrations ran successfully');
       addDummyData(db);
+
       }
     }, []);  
 
-/*
+
+  /*
   useEffect (() => {
     const load = async () => {
-    const data = await drizzleDb.query.tasks. findMany();
+    const data = await drizzleDb.query.tasks.findMany();
     console.log('~load ~ data:', data);
     setData(data);
     };
     load();
     }, []);
-*/
+    */
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Suspense fallback={<ActivityIndicator size="large" />}>
@@ -64,8 +69,10 @@ export default function RootLayout() {
             options={{ enableChangeListener: true }}
             useSuspense>
           <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{  headerShown: true, title: '📚 Liste des livres'}} />
             <Stack.Screen name="+not-found" />
+            <Stack.Screen name="Details" options={{  title: '📚 Détails de livre'}}  />
+            <Stack.Screen name="editBook" />
           </Stack>
             
         </SQLiteProvider>
