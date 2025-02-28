@@ -17,10 +17,13 @@ import migrations from '@/drizzle/migrations';
 import { addDummyData} from '@/db/addDummyData';
 import DetailsScreen from './(tabs)/Details';
 //--------------------
+import { Provider } from "react-redux";
+import { store } from "./store/store";
+
 
 export const DATABASE_NAME = 'books';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
+// Prevent the splash screen from auto-hiding before asset loading is complete. 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -50,34 +53,25 @@ export default function RootLayout() {
     }, []);  
 
 
-  /*
-  useEffect (() => {
-    const load = async () => {
-    const data = await drizzleDb.query.tasks.findMany();
-    console.log('~load ~ data:', data);
-    setData(data);
-    };
-    load();
-    }, []);
-    */
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Suspense fallback={<ActivityIndicator size="large" />}>
-        <SQLiteProvider
-            databaseName={DATABASE_NAME}
-            options={{ enableChangeListener: true }}
-            useSuspense>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{  headerShown: true, title: '📚 Liste des livres'}} />
-            <Stack.Screen name="+not-found" />
-            <Stack.Screen name="Details" options={{  title: '📚 Détails de livre'}}  />
-            <Stack.Screen name="editBook" />
-          </Stack>
-            
-        </SQLiteProvider>
-      </Suspense>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <Provider store={store}>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Suspense fallback={<ActivityIndicator size="large" />}>
+          <SQLiteProvider
+              databaseName={DATABASE_NAME}
+              options={{ enableChangeListener: true }}
+              useSuspense>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{  headerShown: true, title: '📚 Liste des livres'}} />
+              <Stack.Screen name="+not-found" />
+              <Stack.Screen name="Details" options={{  title: '📚 Détails de livre'}}  />
+              <Stack.Screen name="editBook" />
+            </Stack>
+              
+          </SQLiteProvider>
+        </Suspense>
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </Provider>
   );
 }

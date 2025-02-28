@@ -1,18 +1,18 @@
 import React from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity, Linking  } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity, Linking } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { getImage } from "../../db/addBookDB";
-
+import { useSelector } from "react-redux";
+import { RootState } from "../store/store";
 
 export default function DetailsScreen() {
   const router = useRouter();
-  const { book } = useLocalSearchParams();
-  //const bookData = book ? JSON.parse(book) : null; // Conversion JSON -> Objet
-  const bookData = typeof book === "string" ? JSON.parse(book) : null; 
-  const handleOpenLink = () => {
-    Linking.openURL(bookData.link.trim());
-  };
+  const { bookId } = useLocalSearchParams(); // Récupération de l'ID du livre depuis l'URL
+  console.log("bookId reçu :", bookId);
+  const bookData = useSelector((state: RootState) =>
+    state.books.list.find((b) => b.id === Number(bookId))
+  );
 
   if (!bookData) {
     return (
@@ -23,7 +23,13 @@ export default function DetailsScreen() {
         </TouchableOpacity>
       </View>
     );
-  }
+  } 
+
+  const handleOpenLink = () => {
+    if (bookData.link) {
+      Linking.openURL(bookData.link.trim());
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -31,10 +37,7 @@ export default function DetailsScreen() {
         <Ionicons name="arrow-back" size={28} color="#fff" />
       </TouchableOpacity>
 
-      <Image
-        source={getImage(bookData.image)}
-        style={styles.image}
-      />
+      <Image source={getImage(bookData.image)} style={styles.image} />
 
       <View style={styles.infoContainer}>
         <Text style={styles.title}>{bookData.title}</Text>
@@ -42,14 +45,16 @@ export default function DetailsScreen() {
         <Text style={styles.author}>Pays : ✍️ {bookData.country}</Text>
         <Text style={styles.author}>Langue : ✍️ {bookData.language}</Text>
         <Text style={styles.pages}>Pages : 📖 {bookData.pages} pages</Text>
-        <Text style={styles.publishedDate}>Date de publication : 📅 Publié en {bookData.publishedDate}</Text>
-        <Text style={styles.publishedDate}>Prix :  📅  {bookData.prix}</Text>
+        <Text style={styles.publishedDate}>Date de publication : 📅 {bookData.publishedDate}</Text>
+        <Text style={styles.publishedDate}>Prix : 💰 {bookData.prix}€</Text>
       </View>
-      <TouchableOpacity style={styles.button} onPress={handleOpenLink}>
-        <Text style={styles.buttonText}>En savoir plus</Text>
-      </TouchableOpacity>
-    </View>
 
+      {bookData.link && (
+        <TouchableOpacity style={styles.button} onPress={handleOpenLink}>
+          <Text style={styles.buttonText}>En savoir plus</Text>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 }
 
@@ -64,6 +69,6 @@ const styles = StyleSheet.create({
   publishedDate: { fontSize: 14, color: "#888" },
   errorContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   errorText: { fontSize: 18, color: "red" },
-  buttonText: {fontSize: 16, color: '#FFFFFF', fontWeight: 'bold'},
-  button: { marginTop: 20, backgroundColor: '#1E90FF', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8, alignItems: 'center' },
+  buttonText: { fontSize: 16, color: "#FFFFFF", fontWeight: "bold" },
+  button: { marginTop: 20, backgroundColor: "#1E90FF", paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8, alignItems: "center" },
 });

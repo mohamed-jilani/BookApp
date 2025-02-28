@@ -176,3 +176,16 @@ export const books = [
   ,      prix: 150
 },
   ];
+/*
+Données soumises : {
+"author": "Uhn", 
+"country": "Azerbaijan", 
+"image": "file:///data/user/0/host.exp.exponent/cache/ExperienceData/%2540anonymous%252FBookApp-f3aa9992-fe3f-4c5f-9e9d-f995cecc67f9/ImagePicker/d515d908-9b31-476e-8fc4-310fc5bfef15.jpeg", 
+"language": "Français", 
+"link": "Http://hh.hh", 
+"pages": 255, 
+"prix": 256, 
+"publishedDate": 2000, 
+"title": "Bbn"
+}
+*/

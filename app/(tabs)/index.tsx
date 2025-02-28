@@ -4,44 +4,44 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import * as schema from "@/db/schema";
-import { Book } from "@/db/schema";
-import { getImage } from "@/db/addBookDB";
 import { StatusBar } from "expo-status-bar";
 import { eq } from "drizzle-orm";
 import { useIsFocused } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../store/store";
+import { addBook, addBooks, removeBook } from "../store/slices/booksSlice";
+import { getImage } from "@/db/addBookDB";
+import { number } from "yup";
 
 export default function Index() {
-  const [data, setData] = useState<Book[]>([]);
+  const [books, setBooks] = useState<schema.Book[]>([]);
   const db = useSQLiteContext();
   const drizzleDb = drizzle(db, { schema });
   const router = useRouter();
 
+  const dispatch = useDispatch();
+  const isFocused = useIsFocused();
+
+  // Récupérer les livres depuis Redux
+  const booksFromRedux = useSelector((state: RootState) => state.books.list);
+
+  // Charger les livres depuis SQLite et les ajouter à Redux si nécessaire
   const loadBooks = async () => {
     const booksList = await drizzleDb.query.books.findMany();
-    console.log("Livres chargés :", booksList);
-    setData(booksList);
-  };
-/*
-  useEffect(() => {
-    loadBooks();
-  }, []);
 
-*/
-  const [books, setBooks] = useState<Book[]>([]);
-  const isFocused = useIsFocused(); // Détecte si l'écran est actif
-
-  useEffect(() => {
-    if (isFocused) {
-      fetchBooks();
+    // Si Redux ne contient pas de livres, les ajouter
+    if (booksFromRedux.length === 0) {
+      dispatch(addBooks(booksList)); // Ajout des livres dans Redu
+      
     }
-  }, [isFocused]);
 
-  const fetchBooks = async () => {
-    const booksFromDB = await drizzleDb.query.books.findMany();
-    setBooks(booksFromDB);
+    setBooks(booksList); // Mettre à jour l'état local avec les livres récupérés
   };
 
+  useEffect(() => {
+    if (isFocused) loadBooks();
+  }, [isFocused]);
 
   const deleteBook = async (id: number) => {
     Alert.alert("Confirmer", "Voulez-vous vraiment supprimer ce livre ?", [
@@ -53,8 +53,14 @@ export default function Index() {
         text: "Supprimer",
         style: "destructive",
         onPress: async () => {
-          await drizzleDb.delete(schema.books).where(eq(schema.books.id,id));
-          fetchBooks();// Recharger la liste après suppression
+          // Suppression de la base de données SQLite
+          await drizzleDb.delete(schema.books).where(eq(schema.books.id, id));
+
+          // Suppression du livre dans Redux
+          dispatch(removeBook(id));
+
+          // Recharge la liste des livres
+          loadBooks();
         },
       },
     ]);
@@ -66,13 +72,13 @@ export default function Index() {
       <Text style={styles.title}>📚 Livres dans la base</Text>
 
       <FlatList
-        data={books}
+        data={booksFromRedux} // Utiliser les livres depuis Redux
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.bookCard}>
             <TouchableOpacity
               style={styles.bookDetails}
-              onPress={() => router.push({ pathname: "/Details", params: { book: JSON.stringify(item) } })}
+              onPress={() => router.push({ pathname: "/Details", params: { bookId: item.id.toString() } })}
             >
               <Image source={getImage(item.image)} style={styles.bookImage} />
               <View style={styles.bookInfo}>
@@ -83,14 +89,13 @@ export default function Index() {
               </View>
             </TouchableOpacity>
 
-            {/* Icônes d'actions */}
             <View style={styles.actionButtons}>
-              {/* Modifier */}
+              {/* Edit */}
               <TouchableOpacity onPress={() => router.push({ pathname: "/editBook", params: { book: JSON.stringify(item) } })}>
                 <Image source={require("../../assets/icons/update.png")} style={styles.iconAction} />
               </TouchableOpacity>
 
-              {/* Supprimer */}
+              {/* Delete */}
               <TouchableOpacity onPress={() => deleteBook(item.id)}>
                 <Image source={require("../../assets/icons/deleteicon.png")} style={styles.iconAction} />
               </TouchableOpacity>
@@ -98,27 +103,28 @@ export default function Index() {
           </View>
         )}
       />
+ 
+      <TouchableOpacity style={styles.floatingButton2} onPress={() => loadBooks()}>
+        <Ionicons name="add" size={50} color="#fff" />
+      </TouchableOpacity>
 
-      {/* Bouton flottant pour ajouter un livre */}
       <TouchableOpacity style={styles.floatingButton} onPress={() => router.push("/addBook")}>
         <Ionicons name="add" size={50} color="#fff" />
       </TouchableOpacity>
-      
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8f9fa", padding: 15 },
-  
+
   title: { fontSize: 22, fontWeight: "bold", textAlign: "center", marginVertical: 15, color: "#333" },
   bookCard: {
     flexDirection: "row",
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 10,
-    marginVertical: 8,  
+    marginVertical: 8,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -132,20 +138,33 @@ const styles = StyleSheet.create({
   bookAuthor: { fontSize: 14, color: "#555" },
   bookPages: { fontSize: 12, color: "#777" },
   bookDate: { fontSize: 12, color: "#999" },
-  floatingButton: { 
-    position: "absolute", bottom: 20, right: 20, borderRadius: 30, backgroundColor: "#007bff", 
-    padding: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, 
-    shadowOpacity: 0.3, shadowRadius: 6, elevation: 5 
+  floatingButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    borderRadius: 30,
+    backgroundColor: "#007bff",
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
   },
-  floatingButton2: { 
-    position: "absolute", bottom: 20, left: 20, borderRadius: 30, backgroundColor: "#007bff", 
-    padding: 10, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, 
-    shadowOpacity: 0.3, shadowRadius: 6, elevation: 5 
+  floatingButton2: {
+    position: "absolute",
+    bottom: 20,
+    left: 20,
+    borderRadius: 30,
+    backgroundColor: "#007bff",
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
   },
   actionButtons: { flexDirection: "row", alignItems: "center", gap: 10 },
   iconAction: { width: 30, height: 30, tintColor: "#007bff" },
-  icon: { width: 50, height: 50, tintColor: "#fff" },
-
   bookDetails: { flexDirection: "row", flex: 1, alignItems: "center" },
-
 });
